@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>APERTURE SCIENCE // AUDIO LOG 2016_K</title>
+<style>
+  @import url('https://cdnjs.cloudflare.com/ajax/libs/vt323/1.0.0/vt323.min.css');
+
+  :root{
+    --bg: #1a0f00;
+    --bg-deep: #0f0900;
+    --fg: #ffb000;
+    --fg-dim: #a06e00;
+    --fg-faint: #5c3f00;
+    --scan-op: 0.06;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg-deep);
+    font-family: 'VT323','Consolas',monospace;
+    color:var(--fg);
+    overflow:hidden;
+  }
+
+  #crt{
+    position:relative;
+    width:100%; height:100vh;
+    background: radial-gradient(ellipse at center, var(--bg) 0%, var(--bg-deep) 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:2vh 2vw;
+  }
+
+  /* scanlines + flicker + vignette */
+  #crt::before{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(
+      0deg, rgba(0,0,0,var(--scan-op)) 0px, rgba(0,0,0,var(--scan-op)) 1px,
+      transparent 2px, transparent 3px);
+    pointer-events:none;
+    z-index:5;
+  }
+  #crt::after{
+    content:"";
+    position:absolute; inset:0;
+    box-shadow: inset 0 0 18vw rgba(0,0,0,0.85);
+    pointer-events:none;
+    z-index:6;
+    animation: flicker 6s infinite;
+  }
+  @keyframes flicker{
+    0%,97%,100%{opacity:1;}
+    98%{opacity:0.92;}
+    99%{opacity:0.97;}
+  }
+
+  #screen{
+    position:relative;
+    width:min(1200px, 96vw);
+    height:min(680px, 92vh);
+    border:3px solid var(--fg-dim);
+    border-radius:6px;
+    box-shadow:
+      0 0 25px rgba(255,176,0,0.25),
+      inset 0 0 40px rgba(255,176,0,0.06);
+    display:flex;
+    background:linear-gradient(180deg, rgba(255,176,0,0.02), transparent 20%);
+    text-shadow: 0 0 4px rgba(255,176,0,0.85), 0 0 10px rgba(255,176,0,0.35);
+  }
+
+  #topbar{
+    position:absolute;
+    top:-2px; left:0; right:0;
+    display:flex; justify-content:space-between;
+    font-size:14px;
+    padding:4px 10px;
+    color:var(--fg-dim);
+    letter-spacing:1px;
+    border-bottom:1px solid var(--fg-faint);
+    background:var(--bg-deep);
+  }
+
+  /* Left column */
+  #left{
+    width:60%;
+    padding:34px 20px 20px 22px;
+    border-right:2px dashed var(--fg-faint);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    gap:6px;
+  }
+
+  .meta-line{
+    font-size:15px;
+    color:var(--fg-dim);
+    letter-spacing:1px;
+    white-space:pre;
+  }
+
+  .verse-block{
+    margin-top:10px;
+    font-size:26px;
+    line-height:1.5;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    white-space:pre-wrap;
+    min-height:200px;
+  }
+
+  .cursor{
+    display:inline-block;
+    width:0.55em;
+    background:var(--fg);
+    animation: blink 1s steps(1) infinite;
+    margin-left:2px;
+  }
+  @keyframes blink{
+    0%,49%{opacity:1;}
+    50%,100%{opacity:0;}
+  }
+
+  /* Right column: ASCII art */
+  #right{
+    width:40%;
+    padding:34px 18px 20px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+
+  #ascii{
+    font-size:13px;
+    line-height:1.05;
+    white-space:pre;
+    color:var(--fg);
+    text-align:center;
+    filter: drop-shadow(0 0 3px rgba(255,176,0,0.6));
+    transition: opacity 0.6s ease;
+  }
+
+  #timecode{
+    position:absolute;
+    bottom:6px; right:14px;
+    font-size:14px;
+    color:var(--fg-faint);
+  }
+
+  #loadPanel{
+    position:absolute;
+    z-index:20;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    background:rgba(15,9,0,0.92);
+    border:2px solid var(--fg-dim);
+    border-radius:6px;
+    padding:26px 34px;
+    box-shadow:0 0 20px rgba(255,176,0,0.15);
+  }
+
+  #startBtn{
+    background:var(--bg-deep);
+    color:var(--fg);
+    border:2px solid var(--fg-dim);
+    font-family:'VT323',monospace;
+    font-size:22px;
+    padding:14px 26px;
+    letter-spacing:2px;
+    cursor:pointer;
+    text-shadow:0 0 6px rgba(255,176,0,0.7);
+    box-shadow:0 0 14px rgba(255,176,0,0.2);
+  }
+  #startBtn:hover{ background:var(--fg-faint); }
+
+  #audioNote{
+    text-align:center;
+    font-size:13px;
+    color:var(--fg-faint);
+    max-width:340px;
+  }
+</style>
+</head>
+<body>
+
+<div id="crt">
+  <div id="screen">
+    <div id="topbar">
+      <span>APERTURE SCIENCE (R) COMPUTER-AIDED ENRICHMENT CENTER, PORTAL INSTALATIONS</span>
+      <span id="clock">00:00:00</span>
+    </div>
+
+    <div id="left">
+      <div class="meta-line" id="metaLine">LOG_FILE: K_SUBJECT.TXT</div>
+      <div class="meta-line" id="metaLine2">STATUS: STANDBY</div>
+      <div class="verse-block" id="verseText"><span class="cursor">█</span></div>
+    </div>
+
+    <div id="right">
+      <pre id="ascii"></pre>
+    </div>
+
+    <div id="timecode">T+ <span id="tc">0:00</span></div>
+
+    <div id="loadPanel">
+      <button id="startBtn">▶ INICIAR REGISTRO DE AUDIO</button>
+      <div id="audioNote">Pulsa para iniciar la reproducción sincronizada</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ALMACEN DE ASCII ART
+     Edita libremente el contenido de cada <pre data-art="..."> .
+     Al ser texto plano de HTML, NO hace falta escapar \ ni / ni `.
+     El unico caracter que sí debes escapar si aparece en tu arte
+     es el signo menor-que "<" -> escribelo como &lt;
+     Cada bloque corresponde a un id usado en VERSES (campo "art").
+     ============================================================ -->
+<div id="asciiStore" style="display:none">
+<pre data-art="logo">
+      .   *   APERTURE   *   .
+     /-----------------------\
+    |    ___________________  |
+    |   /                   \ |
+    |  |     A P E R T U R E | |
+    |  |      S C I E N C E  | |
+    |   \___________________/ |
+     \-----------------------/
+        WE DO WHAT WE MUST
+</pre>
+<pre data-art="parka">
+          .-""""-.
+         /  ,--.  \
+        |  ( o  )  |
+        |   `--'   |
+         \  ____  /
+          '.____.'
+        _/|      |\_
+       /  |PARKA |  \
+      |   |______|   |
+      |___|      |___|
+         (SOFA BELOW)
+   ______________________
+  |______________________|
+</pre>
+<pre data-art="coffee">
+            (  (
+             )  )
+          ........
+          |      |]
+          \      /
+           `----'
+      steam rising...
+       C O F F E E
+</pre>
+<pre data-art="kletter">
+      ██   ██
+     ██  ██
+    █████
+     ██  ██
+          ██   ██  ██
+</pre>
+<pre data-art="phone">
+        .------.
+       /  ____  \
+      |  |    |   |
+      |  |____|   |
+      |  o   O    |
+      |___________|
+     PHOTOS: 214
+     [ K. -- LAST SEEN ]
+</pre>
+<pre data-art="cigarette">
+        )
+       (
+        )
+     ____
+    |    |______________
+    |    |______________)
+    |____|
+     ~ ~ ~
+    fading...
+    fading...
+    ......
+</pre>
+<pre data-art="infinal">
+       /     \
+       |     |
+       \     /
+       `---'
+       |
+       |
+       _===_
+                [_____]  RECIBO:
+               |  $  |  ------
+              |     |  TOTAL
+</pre>
+<pre data-art="infinite">
+     .---.   .---.
+     /     \ /     \
+     (    o  X  o    )
+     \     / \     /
+      `---'   `---'
+      (supposed to be an infinity symbol btw)
+</pre>
+<pre data-art="vela">
+         (
+        ) )
+       ( (
+       ||
+       .----.
+       |    |
+       |    |
+       |____|
+</pre>
+<pre data-art="skyl">
+     |---|       |---|
+     | | | |___| |   |
+     |   | |   | |   |
+     | | | |   | | | |
+     |___| |___| |___|
+</pre>
+<pre data-art="pics">
+      .---------------.
+      |  [O]      (o) |
+      |     .---.     |
+      |    /  O  \    |
+      |    \     /    |
+      |     `---'     |
+      '---------------'
+</pre>
+<pre data-art="black">
+       █████     █████
+       ███████   ███████
+       █████     █████
+       ███████   ███████
+       ███████   ███████
+       ██   ██   ██   ██
+</pre>
+<pre data-art="heart">
+         /\  /\
+         /  \/  \
+         \      /
+         \    /
+         \  /
+         \/
+</pre>
+</div>
+
+<audio id="track" src="k.mp3" preload="auto"></audio>
+
+<script>
+/* ============================================================
+   APERTURE SCIENCE // AUDIO LOG 2016_K
+   Secuencia de créditos estilo Portal (Still Alive) adaptada
+   a un tempo lento (~76 BPM). El contenido lírico de este
+   archivo es TEXTO ORIGINAL escrito para evocar la escena
+   (abrigo, café, la letra "K", fotografías, cigarrillo) sin
+   reproducir la letra real de la canción, por temas de
+   derechos de autor. Sustituye VERSES[i].text por la letra
+   real si tienes los derechos para usarla en tu proyecto.
+   ============================================================ */
+
+const CPS_DELAY = 130; // ms por caracter (mas lento, ritmo pausado)
+const NEWLINE_PAUSE = 550; // ms de pausa extra en cada salto de linea
+
+const ASCII = {};
+document.querySelectorAll('#asciiStore pre[data-art]').forEach(pre => {
+  // .textContent respeta saltos de línea y no requiere escapar / ni \
+  ASCII[pre.dataset.art] = pre.textContent;
+});
+
+const VERSES = [
+  {
+    time: "0:00",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: INICIANDO REGISTRO // 2016_K",
+    text: "REGISTRO DE AUDIO APERTURE SCIENCE\nARCHIVO: 2016_K\nCARGANDO MEMORIA ASOCIADA...",
+    art: "kletter" /* kletter */
+  },
+{
+    time: "0:30",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: EJECUTANDO... // 2016_K",
+    text: "ARCHIVO ENCONTRADO, CARGANDO...",
+    art: "kletter" /* kletter */
+  },
+  {
+    time: "0:42",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: NOSTALGICO",
+    text: "I remember when I first noticed that you liked me back",
+    art: "kletter"
+  },
+  {
+    time: "0:53",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: RUTINA MATUTINA DETECTADA",
+    text: "We were sitting down in a restaurant waiting for the check",
+    art: "infinal"
+  },
+  {
+    time: "1:03",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: PENSANDO EN TI",
+    text: "We had made love earlier that day with no strings attached",
+    art: "cigarette"
+  },
+  {
+    time: "1:13",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: ARCHIVO DE FOTOS ABIERTO",
+    text: "But I could tell that something had changed, how you looked at me then",
+    art: "coffee"
+  },
+  {
+    time: "1:23",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "Kristen, come right back",
+    art: "phone"
+  },
+  {
+    time: "1:29",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: PACIENTE",
+    text: "I've been waiting for you",
+    art: "parka"
+  },
+  {
+    time: "1:33",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: ¿EXTRAÑO?",
+    text: "To slip back in bed",
+    art: "parka"
+  },
+  {
+    time: "1:39",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: ¿EXTRAÑO?",
+    text: "When you light the candle",
+    art: "vela"
+  },
+  {
+    time: "1:50",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: DESCONOCIDO",
+    text: "No debería suceder esto...",
+    art: "vela"
+  },
+  {
+    time: "2:05",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "And on the Lower East Side, you're dancing with me now",
+    art: "skyl"
+  },
+  {
+    time: "2:15",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "And I'm taking pictures of you with flowers on the wall",
+    art: "pics"
+  },
+  {
+    time: "2:25",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "Think I like you best when you're dressed in black from head to toe",
+    art: "black"
+  },
+  {
+    time: "2:35",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "Think I like you best when you're just with me and no one else",
+    art: "infinite"
+  },
+  {
+    time: "2:45",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "Kristen, come right back",
+    art: "phone"
+  },
+  {
+    time: "2:51",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: PACIENTE",
+    text: "I've been waiting for you",
+    art: "parka"
+  },
+  {
+    time: "2:55",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: ¿EXTRAÑO?",
+    text: "To slip back in bed",
+    art: "parka"
+  },
+  {
+    time: "3:01",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: ¿EXTRAÑO?",
+    text: "When you light the candle",
+    art: "vela"
+  },
+  {
+    time: "3:26",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "And I'm kissing you, lying in my room",
+    art: "heart"
+  },
+  {
+    time: "3:37",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "Holding you until you fall asleep",
+    art: "heart"
+  },
+  {
+    time: "3:46",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "And it's just as good as I knew it would be",
+    art: "infinite"
+  },
+  {
+    time: "3:57",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "Stay with me, I don't want you to sleep",
+    art: "cigarette"
+  },
+  {
+    time: "4:27",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: CERRANDO REGISTRO",
+    text: "Kristen, come right back",
+    art: "phone"
+  },
+  {
+    time: "4:32",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: PACIENTE",
+    text: "I've been waiting for you",
+    art: "parka"
+  },
+  {
+    time: "4:37",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: ¿EXTRAÑO?",
+    text: "To slip back in bed",
+    art: "parka"
+  },
+  {
+    time: "4:43",
+    meta1: "LOG_FILE: K_SUBJECT.TXT",
+    meta2: "STATUS: ¿EXTRAÑO?",
+    text: "When you light the candle",
+    art: "vela"
+  },
+ {
+    time: "5:11",
+    meta1: "LOG_FILE: File not found.",
+    meta2: "STATUS: Deleting...",
+    text: "Erasing memories...",
+    art: "kletter"
+  }
+];
+
+const verseEl = document.getElementById('verseText');
+const metaEl = document.getElementById('metaLine');
+const meta2El = document.getElementById('metaLine2');
+const asciiEl = document.getElementById('ascii');
+const tcEl = document.getElementById('tc');
+const clockEl = document.getElementById('clock');
+const startBtn = document.getElementById('startBtn');
+const loadPanel = document.getElementById('loadPanel');
+const audioTrack = document.getElementById('track');
+
+let running = false;
+let startTimestamp = 0;
+let currentIndex = -1;
+let typingToken = 0;
+
+function fmtClock(totalMs){
+  const s = Math.floor(totalMs/1000);
+  const hh = String(Math.floor(s/3600)).padStart(2,'0');
+  const mm = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return `${hh}:${mm}:${ss}`;
+}
+
+function fmtTC(totalMs){
+  const s = Math.floor(totalMs/1000);
+  const mm = Math.floor(s/60);
+  const ss = String(s%60).padStart(2,'0');
+  return `${mm}:${ss}`;
+}
+
+async function typeText(text, token){
+  verseEl.innerHTML = "";
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  cursor.textContent = '█';
+
+  for(let i=0;i<text.length;i++){
+    if(token !== typingToken) return; // cancelado por nueva estrofa
+    verseEl.textContent = text.slice(0, i+1);
+    verseEl.appendChild(cursor);
+    const ch = text[i];
+    // pausas ligeramente mas largas en saltos de linea, para respirar
+    const delay = ch === '\n' ? NEWLINE_PAUSE : CPS_DELAY;
+    await new Promise(r => setTimeout(r, delay));
+  }
+}
+
+function fadeAscii(art){
+  asciiEl.style.opacity = 0;
+  setTimeout(()=>{
+    asciiEl.textContent = ASCII[art];
+    asciiEl.style.opacity = 1;
+  }, 300);
+}
+
+async function playVerse(v, idx){
+  typingToken++;
+  const myToken = typingToken;
+
+  // "CLS" -> limpiar pantalla brevemente
+  verseEl.style.opacity = 0;
+  await new Promise(r=>setTimeout(r, 200));
+  verseEl.style.opacity = 1;
+
+  metaEl.textContent = v.meta1;
+  meta2El.textContent = v.meta2;
+  fadeAscii(v.art);
+
+  await typeText(v.text, myToken);
+}
+
+function scheduleSequence(){
+  VERSES.forEach((v, idx) => {
+    const [m,s] = v.time.split(':').map(Number);
+    const ms = (m*60+s)*1000;
+    setTimeout(()=>{
+      if(!running) return;
+      playVerse(v, idx);
+    }, ms);
+  });
+}
+
+function tick(){
+  if(!running) return;
+  const elapsed = Date.now() - startTimestamp;
+  clockEl.textContent = fmtClock(elapsed);
+  tcEl.textContent = fmtTC(elapsed);
+  requestAnimationFrame(tick);
+}
+
+startBtn.addEventListener('click', () => {
+  if(running) return;
+  running = true;
+  startTimestamp = Date.now();
+  loadPanel.style.display = 'none';
+
+  audioTrack.currentTime = 0;
+  audioTrack.play().catch(()=>{
+    // Si el navegador bloquea el audio, la secuencia visual sigue igualmente
+  });
+
+  scheduleSequence();
+  requestAnimationFrame(tick);
+});
+</script>
+
+</body>
+</html>
